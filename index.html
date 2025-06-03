@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Interaktif Kelas 10 Semester 2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f1f5f9; /* slate-100 */
+            color: #1e293b; /* slate-800 */
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        .option-btn {
+            transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.1s ease;
+        }
+        .option-btn:hover:not([disabled]) {
+            background-color: #e0f2fe; /* sky-100 */
+            border-color: #38bdf8; /* sky-400 */
+            transform: translateY(-2px);
+        }
+        .correct {
+            background-color: #dcfce7 !important; /* green-100 */
+            border-color: #22c55e !important; /* green-500 */
+            color: #15803d !important; /* green-700 */
+        }
+        .incorrect {
+            background-color: #fee2e2 !important; /* red-100 */
+            border-color: #ef4444 !important; /* red-500 */
+            color: #b91c1c !important; /* red-700 */
+        }
+        .feedback-card {
+            animation: fadeIn 0.5s;
+        }
+        .main-menu-btn {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .main-menu-btn:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e5e7eb; /* gray-200 */
+            border-radius: 9999px;
+            height: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #fbbf24; /* amber-400 */
+            transition: width 0.3s ease-in-out;
+            border-radius: 9999px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .subject-icon {
+            font-size: 2.5rem; /* Ukuran ikon */
+            line-height: 1;
+        }
+    </style>
+</head>
+<body class="font-sans">
+    <div class="container mx-auto p-4 md:p-8 max-w-3xl min-h-screen flex flex-col justify-center">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Kuis Interaktif Materi Kelas 10</h1>
+            <p class="text-md md:text-lg text-slate-600 mt-2">Semester 2 - Kurikulum Merdeka</p>
+        </header>
+
+        <div id="main-menu-area" class="text-center">
+            <h2 class="text-2xl font-semibold text-slate-800 mb-6">Pilih Mata Pelajaran:</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                <button data-subject="bahasaInggris" class="main-menu-btn bg-sky-500 hover:bg-sky-600 text-white p-6 rounded-xl flex flex-col items-center justify-center">
+                    <span class="subject-icon">🇬🇧</span>
+                    <span class="mt-3 text-xl font-semibold">Bahasa Inggris</span>
+                </button>
+                <button data-subject="bahasaIndonesia" class="main-menu-btn bg-red-500 hover:bg-red-600 text-white p-6 rounded-xl flex flex-col items-center justify-center">
+                    <span class="subject-icon">🇮🇩</span>
+                    <span class="mt-3 text-xl font-semibold">Bahasa Indonesia</span>
+                </button>
+                <button data-subject="seniTeater" class="main-menu-btn bg-purple-500 hover:bg-purple-600 text-white p-6 rounded-xl flex flex-col items-center justify-center">
+                     <span class="subject-icon">🎭</span>
+                    <span class="mt-3 text-xl font-semibold">Seni Teater</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="quiz-container" class="bg-white p-6 md:p-8 rounded-xl shadow-xl hidden">
+            <div class="flex justify-between items-center mb-2">
+                <h3 id="quiz-subject-title" class="text-xl font-semibold text-amber-600">Kuis Subjek</h3>
+                <button id="back-to-menu-from-quiz" class="text-sm text-sky-600 hover:text-sky-800 font-medium">&larr; Kembali ke Menu</button>
+            </div>
+            <div class="progress-bar-container mb-4">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div id="question-area" class="mb-6">
+                <p class="text-sm text-slate-500 mb-1" id="question-counter">Pertanyaan 1 dari 20</p>
+                <h2 class="text-xl md:text-2xl font-semibold text-slate-800" id="question-text">Memuat pertanyaan...</h2>
+            </div>
+
+            <div id="options-area" class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-6">
+            </div>
+
+            <div id="feedback-area" class="hidden p-4 rounded-lg feedback-card mb-6">
+                <h3 id="feedback-title" class="text-lg font-semibold mb-1"></h3>
+                <p id="feedback-explanation" class="text-sm"></p>
+            </div>
+            
+            <div id="navigation-area" class="flex flex-col sm:flex-row justify-between items-center">
+                <div class="text-lg font-semibold text-slate-700 mb-4 sm:mb-0">Skor: <span id="score" class="text-amber-600">0</span></div>
+                <button id="next-question-btn" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-300 hidden">
+                    Soal Berikutnya
+                </button>
+            </div>
+        </div>
+
+        <div id="results-area" class="hidden text-center p-6 bg-white rounded-xl shadow-xl">
+            <h2 class="text-2xl font-bold text-slate-800 mb-3">Kuis Selesai!</h2>
+            <p class="text-xl text-slate-600 mb-2">Mata Pelajaran: <span id="results-subject" class="font-semibold text-amber-700"></span></p>
+            <p class="text-xl text-slate-600 mb-6">Skor Akhir Anda: <span id="final-score" class="font-bold text-amber-600">0</span> dari <span id="total-questions-final">20</span></p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button id="restart-quiz-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-8 rounded-lg transition duration-300">
+                    Ulangi Kuis Ini
+                </button>
+                <button id="back-to-main-menu-btn" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-8 rounded-lg transition duration-300">
+                    Kembali ke Menu Utama
+                </button>
+            </div>
+        </div>
+         <footer class="text-center mt-8 text-sm text-slate-500">
+            <p>Pilih jawaban yang menurut Anda paling tepat.</p>
+        </footer>
+    </div>
+
+<script>
+const quizData = {
+    bahasaInggris: [
+        { question: "Which sentence correctly uses the Simple Present Tense for a habitual action?", options: ["He is going to school now.", "He go to school every day.", "He goes to school every day.", "He went to school yesterday."], correctAnswer: 2, explanation: "For habitual actions with 'He/She/It', Simple Present Tense uses Verb-s/es. 'He goes to school every day.' is correct." },
+        { question: "The main purpose of an Analytical Exposition text is to...", options: ["Tell a story.", "Describe how to do something.", "Persuade the reader to agree with a point of view.", "Entertain the reader with a funny incident."], correctAnswer: 2, explanation: "Analytical Exposition texts aim to persuade the reader by presenting arguments supporting a thesis." },
+        { question: "'Beautiful', 'tall', and 'interesting' are examples of...", options: ["Nouns", "Verbs", "Adjectives", "Adverbs"], correctAnswer: 2, explanation: "Adjectives are words that describe nouns or pronouns, like 'beautiful flower' or 'tall man'." },
+        { question: "Which of the following is a correct imperative sentence to give a command?", options: ["You should close the window.", "Close the window!", "Closing the window is good.", "The window is closed."], correctAnswer: 1, explanation: "Imperative sentences start with a base verb to give commands, e.g., 'Close the window!'." },
+        { question: "The 'Goal' in a procedure text usually states...", options: ["The materials needed.", "The steps to be followed.", "What is to be made or done.", "The problems encountered."], correctAnswer: 2, explanation: "The 'Goal' section of a procedure text clearly states the aim or what will be achieved, often in the title." },
+        { question: "The 'Orientation' in a narrative text typically introduces...", options: ["The main problem.", "The solution to the conflict.", "The characters, setting, and time.", "The moral of the story."], correctAnswer: 2, explanation: "Orientation in a narrative text sets the scene by introducing characters, the setting (place), and time." },
+        { question: "What tense is most commonly used in narrative texts to describe past events?", options: ["Simple Present Tense", "Present Continuous Tense", "Simple Past Tense", "Future Tense"], correctAnswer: 2, explanation: "Narrative texts usually recount events that have already happened, so Simple Past Tense is predominantly used." },
+        { question: "An adverb of manner describes...", options: ["When an action happens.", "Where an action happens.", "How an action is performed.", "How often an action happens."], correctAnswer: 2, explanation: "Adverbs of manner tell us how something is done, e.g., 'He spoke *softly*.'" },
+        { question: "'Don't run in the hallway!' is an example of a/an...", options: ["Positive command", "Request", "Negative command (prohibition)", "Suggestion"], correctAnswer: 2, explanation: "This is a negative command or prohibition, telling someone not to do something." },
+        { question: "The structure 'Thesis - Arguments - Reiteration' belongs to which text type?", options: ["Narrative Text", "Procedure Text", "Descriptive Text", "Analytical Exposition Text"], correctAnswer: 3, explanation: "Analytical Exposition texts are structured with a thesis (author's position), arguments to support it, and a reiteration (conclusion)." },
+        { question: "Which of these is NOT typically found in the 'Materials' section of a recipe (procedure text)?", options: ["Ingredients like flour and sugar.", "Tools like bowls and spoons.", "The final appearance of the dish.", "Quantities like '2 cups' or '1 teaspoon'."], correctAnswer: 2, explanation: "The 'Materials' section lists ingredients and tools. The final appearance is the result, not a material." },
+        { question: "A 'fractured story' often involves...", options: ["A completely new and original plot.", "Retelling a classic story with significant changes.", "A story with no clear ending.", "A story written in a foreign language."], correctAnswer: 1, explanation: "Fractured stories are often reinterpretations or parodies of well-known tales, changing elements like characters or plot." },
+        { question: "What is the function of 'to be' (am, is, are) in Simple Present Tense when not followed by an action verb?", options: ["To show future plans.", "To indicate possession.", "To describe states, identity, or location.", "To form questions about actions."], correctAnswer: 2, explanation: "'To be' (am, is, are) is used for nominal sentences to describe states (She *is* happy), identity (I *am* a student), or location (They *are* here)." },
+        { question: "The part of a narrative where the main conflict or problem develops is called...", options: ["Orientation", "Resolution", "Complication", "Coda"], correctAnswer: 2, explanation: "The Complication is where the story's main problem or conflict arises and intensifies." },
+        { question: "Which of these adverbs indicates frequency?", options: ["Quickly", "Yesterday", "Always", "There"], correctAnswer: 2, explanation: "'Always' is an adverb of frequency, indicating how often an action occurs." },
+        { question: "To make an imperative sentence more polite, you can add the word...", options: ["Maybe", "Never", "Please", "Soon"], correctAnswer: 2, explanation: "Adding 'Please' makes a command or request more polite, e.g., 'Please sit down.'" },
+        { question: "The final part of an Analytical Exposition text, which restates the author's position, is the...", options: ["Argument", "Thesis", "Evidence", "Reiteration"], correctAnswer: 3, explanation: "Reiteration (or conclusion) summarizes the arguments and restates the author's initial thesis or position." },
+        { question: "What is the purpose of using 'Firstly, Secondly, Finally' in an expository or procedure text?", options: ["To show politeness.", "To indicate time sequence or order of points.", "To express personal opinions.", "To ask questions."], correctAnswer: 1, explanation: "These words (sequential adverbs/connectives) are used to structure information logically, showing sequence or order." },
+        { question: "If a story is told from the 'I' perspective, the point of view is...", options: ["First person", "Second person", "Third person limited", "Third person omniscient"], correctAnswer: 0, explanation: "When the narrator uses 'I' and is a character in the story, it's a first-person point of view." },
+        { question: "Which sentence is grammatically correct?", options: ["They does not like pizza.", "She don't speak French.", "We watches movies on Fridays.", "He reads books in the evening."], correctAnswer: 3, explanation: "'He reads books' is correct (Subject He + Verb-s). The others have subject-verb agreement errors." }
+    ],
+    bahasaIndonesia: [
+        { question: "Tujuan utama dari teks negosiasi adalah...", options: ["Memerintahkan satu pihak untuk mengikuti kemauan pihak lain.", "Mencapai kesepakatan yang menguntungkan kedua belah pihak.", "Menceritakan pengalaman pribadi saat tawar-menawar.", "Mengkritik proses jual beli di pasar."], correctAnswer: 1, explanation: "Negosiasi bertujuan untuk mencapai kesepakatan bersama (win-win solution) melalui proses tawar-menawar." },
+        { question: "Bagian teks negosiasi yang berisi pengenalan awal atau salam pembuka disebut...", options: ["Penawaran", "Persetujuan", "Orientasi", "Permintaan"], correctAnswer: 2, explanation: "Orientasi adalah bagian awal teks negosiasi yang berfungsi sebagai pembuka atau pengenalan." },
+        { question: "Riwayat hidup seseorang yang ditulis oleh orang lain disebut...", options: ["Autobiografi", "Biografi", "Catatan Harian", "Memoar"], correctAnswer: 1, explanation: "Biografi adalah kisah hidup seseorang yang ditulis oleh orang lain, sedangkan autobiografi ditulis oleh orang itu sendiri." },
+        { question: "Unsur batin puisi yang merupakan gagasan pokok atau ide utama yang ingin disampaikan penyair adalah...", options: ["Rima", "Diksi", "Tema", "Tipografi"], correctAnswer: 2, explanation: "Tema adalah ide dasar atau gagasan pokok yang menjadi inti dari keseluruhan isi puisi." },
+        { question: "Penggunaan bahasa yang santun dan persuasif adalah ciri kebahasaan dari teks...", options: ["Deskripsi", "Eksposisi", "Negosiasi", "Narasi"], correctAnswer: 2, explanation: "Dalam teks negosiasi, penggunaan bahasa yang santun dan persuasif sangat penting untuk mencapai kesepakatan." },
+        { question: "Struktur teks biografi yang benar secara berurutan adalah...", options: ["Orientasi - Reorientasi - Peristiwa Penting", "Peristiwa Penting - Orientasi - Reorientasi", "Orientasi - Peristiwa Penting - Reorientasi", "Reorientasi - Peristiwa Penting - Orientasi"], correctAnswer: 2, explanation: "Struktur umum teks biografi adalah Orientasi (pengenalan), Peristiwa Penting (inti cerita), dan Reorientasi (penutup/kesimpulan)." },
+        { question: "Pemilihan kata yang cermat dan tepat dalam puisi untuk mengungkapkan gagasan disebut...", options: ["Imaji", "Majas", "Rima", "Diksi"], correctAnswer: 3, explanation: "Diksi adalah pilihan kata yang digunakan penyair untuk mendapatkan efek tertentu dan menyampaikan makna secara tepat." },
+        { question: "Dalam negosiasi, jika salah satu pihak merasa sangat dirugikan, maka negosiasi tersebut dianggap...", options: ["Berhasil", "Efektif", "Gagal", "Seimbang"], correctAnswer: 2, explanation: "Negosiasi yang baik idealnya menghasilkan solusi menang-menang (win-win solution), bukan merugikan salah satu pihak." },
+        { question: "Hal yang TIDAK umum dimuat dalam teks biografi adalah...", options: ["Latar belakang keluarga tokoh", "Riwayat pendidikan tokoh", "Prestasi yang pernah diraih tokoh", "Ramalan masa depan tokoh"], correctAnswer: 3, explanation: "Biografi berfokus pada fakta dan peristiwa nyata dalam kehidupan tokoh, bukan ramalan masa depan." },
+        { question: "Persamaan bunyi pada akhir baris atau di tengah baris puisi disebut...", options: ["Irama", "Rima", "Amanat", "Nada"], correctAnswer: 1, explanation: "Rima adalah pengulangan bunyi yang berselang, baik di dalam larik sajak maupun pada akhir larik sajak yang berdekatan." },
+        { question: "Tahap 'Penawaran' dalam teks negosiasi berisi...", options: ["Salam pembuka dan perkenalan.", "Pihak pertama menyampaikan keinginannya.", "Proses tawar-menawar dan adu argumen.", "Kesepakatan akhir antara kedua pihak."], correctAnswer: 2, explanation: "Tahap penawaran adalah inti dari negosiasi dimana terjadi tawar-menawar dan penyampaian argumen." },
+        { question: "Menyampaikan keteladanan tokoh agar dapat menginspirasi pembaca adalah salah satu tujuan dari...", options: ["Teks Prosedur", "Teks Biografi", "Teks Negosiasi", "Teks Laporan Hasil Observasi"], correctAnswer: 1, explanation: "Teks biografi bertujuan menceritakan kisah hidup tokoh untuk memberikan inspirasi dan pelajaran berharga (keteladanan)." },
+        { question: "Penggunaan kata-kata yang dapat membangkitkan pengalaman inderawi pembaca (penglihatan, pendengaran, dll.) dalam puisi disebut...", options: ["Tipografi", "Kata Konkret", "Imaji (Citraan)", "Amanat"], correctAnswer: 2, explanation: "Imaji atau citraan adalah penggunaan kata-kata yang merangsang panca indera pembaca, seolah-olah mereka melihat, mendengar, atau merasakan apa yang digambarkan." },
+        { question: "Bahasa yang digunakan dalam negosiasi sebaiknya bersifat...", options: ["Memaksa dan mengancam", "Sarkastik dan menyindir", "Sopan dan argumentatif", "Kaku dan formal"], correctAnswer: 2, explanation: "Negosiasi yang efektif menggunakan bahasa yang sopan untuk menjaga hubungan baik, namun tetap argumentatif untuk menyampaikan poin." },
+        { question: "Bagian penutup dalam teks biografi yang berisi komentar evaluatif atau pandangan penulis tentang tokoh disebut...", options: ["Orientasi", "Klimaks", "Peristiwa Penting", "Reorientasi"], correctAnswer: 3, explanation: "Reorientasi adalah bagian penutup biografi yang bisa berisi kesimpulan atau pandangan penulis, dan bersifat opsional." },
+        { question: "Majas atau gaya bahasa dalam puisi berfungsi untuk...", options: ["Membuat puisi lebih panjang.", "Memperindah ungkapan dan memperkuat makna.", "Menjelaskan arti kata sulit.", "Mengatur jumlah baris dalam bait."], correctAnswer: 1, explanation: "Majas digunakan untuk menciptakan efek keindahan, memperjelas gambaran, dan memperdalam makna dalam puisi." },
+        { question: "Sikap penyair terhadap pokok permasalahan yang diungkapkan dalam puisi (misalnya sedih, gembira) disebut unsur batin...", options: ["Tema", "Amanat", "Nada", "Rasa (Feeling)"], correctAnswer: 3, explanation: "Rasa (feeling) adalah sikap penyair terhadap subjek atau tema puisinya, yang tercermin dalam suasana puisi." },
+        { question: "Jika negosiasi antara penjual dan pembeli menghasilkan harga yang disepakati keduanya, maka tahap yang tercapai adalah...", options: ["Orientasi", "Permintaan", "Penawaran", "Persetujuan"], correctAnswer: 3, explanation: "Persetujuan adalah tahap di mana kedua belah pihak mencapai kesepakatan atas solusi atau harga." },
+        { question: "Tokoh B.J. Habibie adalah contoh subjek yang sering diangkat dalam...", options: ["Teks Negosiasi", "Teks Prosedur", "Teks Biografi", "Puisi Balada"], correctAnswer: 2, explanation: "Kisah hidup tokoh inspiratif seperti B.J. Habibie sering ditulis dalam bentuk teks biografi." },
+        { question: "Tata letak atau bentuk visual puisi, termasuk pengaturan larik dan bait, disebut...", options: ["Rima", "Irama", "Tipografi", "Diksi"], correctAnswer: 2, explanation: "Tipografi atau perwajahan puisi adalah cara puisi itu ditampilkan secara visual di halaman, yang juga bisa mempengaruhi makna." }
+    ],
+    seniTeater: [
+        { question: "Gagasan utama atau ide pokok yang mendasari keseluruhan cerita dalam naskah lakon disebut...", options: ["Alur", "Amanat", "Tema", "Latar"], correctAnswer: 2, explanation: "Tema adalah ide pokok yang menjadi dasar dari sebuah cerita dalam naskah lakon." },
+        { question: "Orang yang bertanggung jawab penuh atas aspek artistik dan kreatif pementasan teater adalah...", options: ["Produser", "Sutradara", "Aktor Utama", "Pimpinan Produksi"], correctAnswer: 1, explanation: "Sutradara adalah pemimpin artistik yang menginterpretasi naskah dan mengarahkan semua elemen pementasan." },
+        { question: "Rangkaian peristiwa yang membentuk jalannya cerita dalam naskah lakon disebut...", options: ["Dialog", "Tokoh", "Latar", "Alur (Plot)"], correctAnswer: 3, explanation: "Alur atau plot adalah jalinan peristiwa yang disusun secara kronologis untuk membentuk cerita." },
+        { question: "Penataan panggung beserta properti yang digunakan untuk menciptakan latar visual sesuai dengan cerita disebut...", options: ["Tata Rias", "Tata Cahaya", "Tata Panggung (Scenery)", "Tata Suara"], correctAnswer: 2, explanation: "Tata panggung atau scenery mencakup desain panggung dan semua properti untuk membangun latar tempat dan suasana." },
+        { question: "Percakapan antar tokoh dalam naskah lakon yang berfungsi memajukan alur disebut...", options: ["Monolog", "Prolog", "Epilog", "Dialog"], correctAnswer: 3, explanation: "Dialog adalah percakapan antara dua tokoh atau lebih yang menjadi elemen utama dalam naskah teater." },
+        { question: "Tahap awal dalam proses pementasan teater yang meliputi pemilihan naskah dan casting pemain disebut...", options: ["Tahap Produksi", "Tahap Pementasan", "Tahap Pasca-Produksi", "Tahap Pra-Produksi"], correctAnswer: 3, explanation: "Pra-Produksi adalah tahap persiapan sebelum latihan dimulai, termasuk pemilihan naskah, pemain, dan konsep." },
+        { question: "Keterangan mengenai tempat, waktu, dan suasana terjadinya peristiwa dalam cerita disebut...", options: ["Tema", "Latar (Setting)", "Alur", "Amanat"], correctAnswer: 1, explanation: "Latar atau setting memberikan konteks tempat, waktu, dan suasana sosial budaya cerita." },
+        { question: "Pesan atau nilai-nilai yang ingin disampaikan pengarang kepada penonton melalui cerita teater adalah...", options: ["Amanat", "Tema", "Dialog", "Konflik"], correctAnswer: 0, explanation: "Amanat adalah pesan moral atau pelajaran yang terkandung dalam sebuah karya teater." },
+        { question: "Riasan wajah dan pakaian yang dikenakan pemain untuk mendukung karakterisasi tokoh disebut...", options: ["Tata Panggung", "Properti", "Tata Rias dan Kostum", "Bloking"], correctAnswer: 2, explanation: "Tata rias dan kostum sangat penting untuk membantu aktor membangun dan menampilkan karakter tokoh." },
+        { question: "Seseorang yang bertanggung jawab atas aspek manajerial dan administratif, seperti anggaran dan jadwal, dalam produksi teater adalah...", options: ["Sutradara", "Pemain", "Pimpinan Produksi", "Penata Artistik"], correctAnswer: 2, explanation: "Pimpinan Produksi mengelola sisi non-artistik seperti manajemen, keuangan, dan promosi." },
+        { question: "Latihan terakhir secara menyeluruh seolah-olah pementasan sesungguhnya disebut...", options: ["Read-through", "Latihan Bloking", "Geladi Resik", "Casting"], correctAnswer: 2, explanation: "Geladi resik adalah latihan final sebelum pementasan yang melibatkan semua elemen produksi secara lengkap." },
+        { question: "Pengaturan posisi dan pergerakan pemain di atas panggung oleh sutradara disebut...", options: ["Akting", "Bloking", "Improvisasi", "Protokol"], correctAnswer: 1, explanation: "Bloking adalah pengaturan pergerakan aktor di panggung untuk menciptakan komposisi visual yang efektif." },
+        { question: "Teater yang seringkali berfungsi sebagai sarana upacara dan menyatu dengan kehidupan masyarakat disebut...", options: ["Teater Modern", "Teater Eksperimental", "Teater Tradisional", "Teater Kontemporer"], correctAnswer: 2, explanation: "Teater tradisional seringkali memiliki fungsi ritual dan sosial yang kuat dalam komunitasnya." },
+        { question: "Tahap dalam proses pementasan teater dimana para pemain menghafalkan dialog dan mendalami peran disebut...", options: ["Tahap Produksi (Latihan)", "Tahap Pasca-Produksi", "Tahap Pra-Produksi", "Tahap Pementasan"], correctAnswer: 0, explanation: "Tahap Produksi atau latihan adalah waktu di mana aktor bekerja secara intensif untuk mempersiapkan peran mereka." },
+        { question: "Pengaturan pencahayaan di panggung untuk menciptakan suasana dan fokus disebut...", options: ["Tata Suara", "Tata Panggung", "Tata Cahaya", "Tata Artistik"], correctAnswer: 2, explanation: "Tata cahaya (lighting) adalah elemen krusial untuk membangun mood, menunjukkan waktu, dan mengarahkan fokus penonton." },
+        { question: "Tokoh utama dalam sebuah cerita teater disebut...", options: ["Antagonis", "Tritagonis", "Protagonis", "Figuran"], correctAnswer: 2, explanation: "Protagonis adalah karakter sentral yang menjadi fokus utama dalam sebuah cerita." },
+        { question: "Proses pemilihan pemain untuk sebuah pementasan teater disebut...", options: ["Audisi (Casting)", "Blocking", "Rehearsal", "Briefing"], correctAnswer: 0, explanation: "Casting atau audisi adalah proses sutradara memilih aktor yang paling cocok untuk memerankan setiap karakter." },
+        { question: "Evaluasi terhadap seluruh proses produksi dan pementasan dilakukan pada tahap...", options: ["Pra-Produksi", "Pementasan", "Latihan", "Pasca-Produksi"], correctAnswer: 3, explanation: "Tahap pasca-produksi adalah waktu untuk evaluasi, pembongkaran set, dan penyusunan laporan." },
+        { question: "Teater modern umumnya dikemas melalui kaidah dramaturgi yang berasal dari...", options: ["Asia Timur", "Timur Tengah", "Dunia Barat", "Afrika"], correctAnswer: 2, explanation: "Struktur dan kaidah teater modern banyak dipengaruhi oleh tradisi dramaturgi Barat." },
+        { question: "Orang yang memerankan tokoh-tokoh dalam naskah lakon di atas panggung disebut...", options: ["Sutradara", "Penonton", "Pemain (Aktor/Aktris)", "Kritikus"], correctAnswer: 2, explanation: "Pemain, yang juga disebut aktor atau aktris, adalah mereka yang bertugas menghidupkan karakter di panggung." }
+    ]
+};
+
+let currentSubject = null;
+let currentQuestionIndex = 0;
+let score = 0;
+let questionsOrder = [];
+
+const mainMenuAreaEl = document.getElementById('main-menu-area');
+const quizContainerEl = document.getElementById('quiz-container');
+const resultsAreaEl = document.getElementById('results-area');
+
+const quizSubjectTitleEl = document.getElementById('quiz-subject-title');
+const progressBarEl = document.getElementById('progress-bar');
+const questionCounterEl = document.getElementById('question-counter');
+const questionTextEl = document.getElementById('question-text');
+const optionsAreaEl = document.getElementById('options-area');
+const feedbackAreaEl = document.getElementById('feedback-area');
+const feedbackTitleEl = document.getElementById('feedback-title');
+const feedbackExplanationEl = document.getElementById('feedback-explanation');
+const scoreEl = document.getElementById('score');
+const nextQuestionBtnEl = document.getElementById('next-question-btn');
+
+const resultsSubjectEl = document.getElementById('results-subject');
+const finalScoreEl = document.getElementById('final-score');
+const totalQuestionsFinalEl = document.getElementById('total-questions-final');
+const restartQuizBtnEl = document.getElementById('restart-quiz-btn');
+const backToMainMenuBtnEl = document.getElementById('back-to-main-menu-btn');
+const backToMenuFromQuizBtn = document.getElementById('back-to-menu-from-quiz');
+
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+function updateProgressBar() {
+    const progressPercentage = ((currentQuestionIndex + 1) / questionsOrder.length) * 100;
+    progressBarEl.style.width = `${progressPercentage}%`;
+}
+
+
+function loadQuestion() {
+    feedbackAreaEl.classList.add('hidden');
+    nextQuestionBtnEl.classList.add('hidden');
+    optionsAreaEl.innerHTML = ''; 
+
+    if (currentQuestionIndex < questionsOrder.length) {
+        const questionIndexInSubjectData = questionsOrder[currentQuestionIndex];
+        const currentQuestion = quizData[currentSubject][questionIndexInSubjectData];
+
+        questionCounterEl.textContent = `Pertanyaan ${currentQuestionIndex + 1} dari ${questionsOrder.length}`;
+        questionTextEl.textContent = currentQuestion.question;
+        scoreEl.textContent = score;
+        updateProgressBar();
+
+        currentQuestion.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.textContent = option;
+            button.classList.add('option-btn', 'w-full', 'text-left', 'p-3', 'md:p-4', 'border-2', 'border-slate-300', 'rounded-lg', 'hover:border-amber-500', 'focus:outline-none', 'focus:ring-2', 'focus:ring-amber-400');
+            button.dataset.index = index;
+            button.addEventListener('click', selectAnswer);
+            optionsAreaEl.appendChild(button);
+        });
+    } else {
+        showResults();
+    }
+}
+
+function selectAnswer(e) {
+    const selectedButton = e.target;
+    const selectedAnswerIndex = parseInt(selectedButton.dataset.index);
+    const questionIndexInSubjectData = questionsOrder[currentQuestionIndex];
+    const currentQuestion = quizData[currentSubject][questionIndexInSubjectData];
+
+    const isCorrect = selectedAnswerIndex === currentQuestion.correctAnswer;
+
+    if (isCorrect) {
+        score++;
+        feedbackTitleEl.textContent = "Benar!";
+        feedbackTitleEl.className = 'text-lg font-semibold mb-1 text-green-700';
+        selectedButton.classList.add('correct');
+    } else {
+        feedbackTitleEl.textContent = "Salah!";
+        feedbackTitleEl.className = 'text-lg font-semibold mb-1 text-red-700';
+        selectedButton.classList.add('incorrect');
+        
+        const correctButton = optionsAreaEl.querySelector(`button[data-index="${currentQuestion.correctAnswer}"]`);
+        if (correctButton) {
+            correctButton.classList.add('correct');
+        }
+    }
+
+    feedbackExplanationEl.textContent = currentQuestion.explanation;
+    feedbackAreaEl.classList.remove('hidden');
+    scoreEl.textContent = score;
+
+    document.querySelectorAll('#options-area button').forEach(btn => {
+        btn.disabled = true;
+    });
+
+    nextQuestionBtnEl.classList.remove('hidden');
+    if (currentQuestionIndex === questionsOrder.length - 1) {
+        nextQuestionBtnEl.textContent = "Lihat Hasil";
+    } else {
+        nextQuestionBtnEl.textContent = "Soal Berikutnya";
+    }
+}
+
+function showResults() {
+    quizContainerEl.classList.add('hidden');
+    resultsAreaEl.classList.remove('hidden');
+    
+    let subjectName = "";
+    if (currentSubject === "bahasaInggris") subjectName = "Bahasa Inggris";
+    else if (currentSubject === "bahasaIndonesia") subjectName = "Bahasa Indonesia";
+    else if (currentSubject === "seniTeater") subjectName = "Seni Teater";
+    
+    resultsSubjectEl.textContent = subjectName;
+    finalScoreEl.textContent = score;
+    totalQuestionsFinalEl.textContent = questionsOrder.length;
+}
+
+function startQuizForSubject(subjectKey) {
+    currentSubject = subjectKey;
+    currentQuestionIndex = 0;
+    score = 0;
+    
+    let subjectName = "";
+    if (subjectKey === "bahasaInggris") subjectName = "Bahasa Inggris";
+    else if (subjectKey === "bahasaIndonesia") subjectName = "Bahasa Indonesia";
+    else if (subjectKey === "seniTeater") subjectName = "Seni Teater";
+    quizSubjectTitleEl.textContent = `Kuis ${subjectName}`;
+
+    questionsOrder = shuffleArray([...Array(quizData[currentSubject].length).keys()]);
+    
+    mainMenuAreaEl.classList.add('hidden');
+    resultsAreaEl.classList.add('hidden');
+    quizContainerEl.classList.remove('hidden');
+    
+    nextQuestionBtnEl.textContent = "Soal Berikutnya";
+    loadQuestion();
+}
+
+function showMainMenu() {
+    mainMenuAreaEl.classList.remove('hidden');
+    quizContainerEl.classList.add('hidden');
+    resultsAreaEl.classList.add('hidden');
+    currentSubject = null; // Reset current subject
+}
+
+document.querySelectorAll('#main-menu-area button').forEach(button => {
+    button.addEventListener('click', (e) => {
+        const subject = e.currentTarget.dataset.subject;
+        if (subject && quizData[subject]) {
+            startQuizForSubject(subject);
+        }
+    });
+});
+
+nextQuestionBtnEl.addEventListener('click', () => {
+    currentQuestionIndex++;
+    loadQuestion();
+});
+
+restartQuizBtnEl.addEventListener('click', () => {
+    if (currentSubject) {
+        startQuizForSubject(currentSubject);
+    }
+});
+
+backToMainMenuBtnEl.addEventListener('click', showMainMenu);
+backToMenuFromQuizBtn.addEventListener('click', showMainMenu);
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    showMainMenu();
+});
+
+</script>
+</body>
+</html>
